@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hello, Brigid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#14162b; --panel:#1e2140; --lilac:#b9a8ff; --peach:#ffc58a;
+    --text:#f2efff; --muted:#a7a3c9;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:var(--night); color:var(--text);
+    font-family:"DM Sans",system-ui,sans-serif; line-height:1.5;
+    display:flex; justify-content:center; padding:24px 16px 48px;
+  }
+  main{width:100%; max-width:520px}
+  h1{
+    font-family:"Bricolage Grotesque",system-ui,sans-serif; font-weight:800;
+    font-size:clamp(3rem,16vw,5.5rem); line-height:.95; margin:32px 0 8px;
+    color:var(--peach); letter-spacing:-.02em;
+  }
+  .sub{color:var(--muted); margin:0 0 28px}
+  .route{display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.9rem}
+  .route i{flex:1; height:2px; background:repeating-linear-gradient(90deg,var(--lilac) 0 6px,transparent 6px 12px)}
+  .bubble{
+    padding:14px 16px; border-radius:18px; margin:14px 0; max-width:88%;
+    animation:pop .25s ease-out;
+  }
+  .him{background:var(--panel); border-bottom-left-radius:4px}
+  .her{background:var(--lilac); color:#1a1640; margin-left:auto; border-bottom-right-radius:4px; white-space:pre-wrap}
+  .who{font-size:.8rem; color:var(--muted); margin:0 0 2px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0}
+  .chip{
+    border:1.5px solid var(--lilac); background:transparent; color:var(--text);
+    padding:8px 14px; border-radius:999px; font:inherit; cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:var(--lilac); color:#1a1640}
+  textarea{
+    width:100%; min-height:130px; resize:vertical; padding:14px; font:inherit;
+    background:var(--panel); color:var(--text); border:1.5px solid #3a3e6b; border-radius:14px;
+  }
+  textarea:focus,.chip:focus-visible,button:focus-visible{outline:3px solid var(--peach); outline-offset:2px}
+  .btn{
+    margin-top:12px; width:100%; padding:14px; border:0; border-radius:14px; cursor:pointer;
+    background:var(--peach); color:#2b1a05; font:inherit; font-weight:500; font-size:1.05rem;
+  }
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .btn.alt{background:transparent; color:var(--text); border:1.5px solid var(--lilac); display:block; text-align:center; text-decoration:none}
+  .hidden{display:none}
+  .note{color:var(--muted); font-size:.85rem; margin-top:10px}
+  @keyframes pop{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion:reduce){.bubble{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="route"><span>Kemboi</span><i></i><span>Brigid</span></div>
+
+  <!-- Screen 1: greeting -->
+  <section id="intro">
+    <h1>HELLO,<br>Brigid</h1>
+    <p class="sub">I'm at my university, you're at yours. Let's close the distance with one question.</p>
+    <button class="btn" id="startBtn">Say hello back</button>
+  </section>
+
+  <!-- Screen 2: the challenge -->
+  <section id="chat" class="hidden">
+    <div class="bubble him">
+      <p class="who">Kemboi</p>
+      HELLO Brigid! 👋 How is it going at your university today?
+    </div>
+    <div class="bubble him">
+      Tell me about your day: classes, food, friends, anything. Write it however you like.
+    </div>
+
+    <div class="chips" id="chips" role="group" aria-label="How is your day?">
+      <button class="chip" aria-pressed="false">😄 Great</button>
+      <button class="chip" aria-pressed="false">🙂 Okay</button>
+      <button class="chip" aria-pressed="false">😴 Tired</button>
+      <button class="chip" aria-pressed="false">😩 Stressed</button>
+    </div>
+
+    <label for="msg" class="sr" style="position:absolute;left:-9999px">Your day</label>
+    <textarea id="msg" placeholder="Today at my university..."></textarea>
+    <button class="btn" id="sendBtn" disabled>Send to Kemboi</button>
+    <p class="note" id="status"></p>
+  </section>
+
+  <!-- Screen 3: the answer -->
+  <section id="done" class="hidden">
+    <div id="thread"></div>
+    <a class="btn alt hidden" id="waBtn" target="_blank" rel="noopener">Also send it on WhatsApp</a>
+  </section>
+</main>
+
+<script>
+/* ========= EDIT THESE BEFORE YOU HOST ========= */
+const FORM_URL  = "https://formspree.io/f/YOUR_FORM_ID";  // collects her answers (see steps)
+const MY_WHATSAPP = "2547XXXXXXXX";                       // your number, country code, no + or spaces
+/* ============================================== */
+
+/* Instant replies from you. First keyword that matches wins. Edit freely. */
+const REPLIES = [
+  { words:["exam","cat","test","assignment"], text:"Exams and assignments don't stand a chance against you. Take it one paper at a time, I'm cheering from my campus. 💪" },
+  { words:["tired","sleep","exhausted"],       text:"Please rest tonight. You've done enough for today. Water, food, then sleep. 😴💛" },
+  { words:["hungry","food","lunch","dinner"],  text:"Go eat something good right now. That's an order from your favorite person. 🍽️" },
+  { words:["miss","lonely","alone"],           text:"I miss you too. Two campuses, one heart. Call you soon. ❤️" },
+  { words:["class","lecture","lecturer"],      text:"A day of lectures! I hope at least one of them was interesting. Tell me the best part later." },
+  { words:["friend","friends"],                text:"Good friends make campus feel like home. Greet them for me. 😄" },
+];
+const FALLBACK = "I read every word. Thank you for telling me about your day. A longer reply is coming soon. ❤️";
+
+const $ = id => document.getElementById(id);
+let mood = "";
+
+$("startBtn").onclick = () => {
+  $("intro").classList.add("hidden");
+  $("chat").classList.remove("hidden");
+  $("msg").focus();
+};
+
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed","false"));
+    chip.setAttribute("aria-pressed","true");
+    mood = chip.textContent.trim();
+  };
+});
+
+$("msg").oninput = () => { $("sendBtn").disabled = $("msg").value.trim().length < 3; };
+
+function bubble(cls, who, text){
+  const d = document.createElement("div");
+  d.className = "bubble " + cls;
+  if (who){ const p = document.createElement("p"); p.className="who"; p.textContent=who; d.appendChild(p); }
+  d.appendChild(document.createTextNode(text));
+  $("thread").appendChild(d);
+}
+
+function pickReply(text){
+  const t = text.toLowerCase();
+  const hit = REPLIES.find(r => r.words.some(w => t.includes(w)));
+  return hit ? hit.text : FALLBACK;
+}
+
+$("sendBtn").onclick = async () => {
+  const message = $("msg").value.trim();
+  const payload = { from:"Brigid", mood: mood || "not picked", message, sentAt:new Date().toString() };
+  $("sendBtn").disabled = true;
+  $("status").textContent = "Sending...";
+
+  // backup copy in her browser
+  try { localStorage.setItem("brigid_" + Date.now(), JSON.stringify(payload)); } catch(e){}
+
+  // send to you
+  let sent = false;
+  if (!FORM_URL.includes("YOUR_FORM_ID")){
+    try{
+      const r = await fetch(FORM_URL, {
+        method:"POST",
+        headers:{ "Accept":"application/json", "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+      sent = r.ok;
+    }catch(e){}
+  }
+
+  $("chat").classList.add("hidden");
+  $("done").classList.remove("hidden");
+  bubble("her", "", (mood ? mood + "\n" : "") + message);
+  setTimeout(() => bubble("him", "Kemboi", pickReply(message)), 700);
+
+  // WhatsApp fallback so you always receive it
+  const wa = $("waBtn");
+  wa.href = "https://wa.me/" + MY_WHATSAPP + "?text=" +
+    encodeURIComponent("HELLO Kemboi! My day at university:\n" + (mood ? mood + "\n" : "") + message);
+  if (!sent) wa.classList.remove("hidden");
+};
+</script>
+</body>
+</html>
